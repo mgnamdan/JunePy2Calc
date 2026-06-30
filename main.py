@@ -1,11 +1,11 @@
 # 1. Turn on -> add in an off switch (x)
-# 2. Take in user input -> parse entire equation
-# 3. Give the result
-# 4. Perform another calculation?
+# 2. Take in user input -> parse entire equation (x)
+# 3. Give the result (x)
+# 4. Perform another calculation? (x)
 # 5. a. If no -> turn off (x)
-# 5. b. If yes -> ask if they want to use last result
-# 6. a. If yes -> repeat 1-5 with last result
-# 6. b. If no -> repeat 1-5 with new numbers
+# 5. b. If yes -> ask if they want to use last result (x)
+# 6. a. If yes -> repeat 1-5 with last result (x)
+# 6. b. If no -> repeat 1-5 with new numbers (x)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # HELPER FUNCTIONS AND IMPORTS
@@ -30,6 +30,52 @@ def divide(numOne, numTwo):
         # return "You can't divide by zero!"
 
 
+def tokenize(equation, lastResult="", useLastResult=False):
+    eqTokens = []
+    num = lastResult
+
+    for char in equation:
+        if char in ["+", "-", "*", "/"]:
+            eqTokens.append(num)
+            eqTokens.append(char)
+            num = ""
+        elif char.isdigit() or char == ".":
+            num += char
+        else:
+            continue
+
+    eqTokens.append(num)
+
+    return eqTokens
+
+
+def evaluate(rawEq):
+    operations = {
+        "*": multiply,
+        "/": divide,
+        "+": add,
+        "-": subtract,
+    }
+
+    tokens = rawEq
+
+    for operator in operations.keys():
+        newTokens = [tokens[0]]
+        for idx in range(1, len(tokens), 2):
+
+            op = tokens[idx]
+            right = tokens[idx + 1]
+
+            if op == operator:
+                left = newTokens.pop()
+                result = operations[operator](left, right)
+                newTokens.append(result)
+            else:
+                newTokens.append(op)
+                newTokens.append(right)
+        tokens = newTokens
+
+    return newTokens[0]    
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,8 +86,6 @@ def main():
     useLastResult = False
     result = 0
 
-    operations = {"*": multiply, "/": divide, "+": add, "-": subtract}
-
     while calcOn:
 
         # Take in user equation
@@ -49,41 +93,17 @@ def main():
         print("Enter an equation")
         rawEq = input(" --> ")
 
-
-
         # Parse equation into list
-        eqTokens = []
-        num = ""
-        
-        for idx in range(len(rawEq)):
-            if rawEq[idx] in ["+", "-", "*", "/"]:
-                eqTokens.append(num)
-                eqTokens.append(rawEq[idx])
-                num = ""
-            elif rawEq[idx].isdigit() or rawEq[idx] == ".":
-                num += rawEq[idx]
-            else:
-                continue
-        
-        if num:
-            eqTokens.append(num)
+        if useLastResult:
+            eqTokens = tokenize(rawEq, result)
+        else:
+            eqTokens = tokenize(rawEq)
 
-        print(f"eqTokens is first: {eqTokens}")
-        
+
         # Solve equation in order of operations
-        for key in operations.keys():
-            for idx in range(len(eqTokens)):
-                if eqTokens[idx] == key:
-                    numOne = eqTokens[idx-1]
-                    numTwo = eqTokens[idx+1]
-                    result = operations[key](numOne, numTwo)
-                    eqTokens[idx-1:idx+1] = result
-                    print("")
-                    print(f"After passing for {key} eqTokens is: {eqTokens}")
+        result = evaluate(eqTokens)
 
-
-
-        print(f"After all keys eqTokens is: {eqTokens}")
+        print(f" --> {result}")
 
         validChoice = False
         while not validChoice:
@@ -93,6 +113,22 @@ def main():
 
             if another in ["y", "yes"]:
                 validChoice = True
+
+                validResultChoice = False
+                while not validResultChoice:
+                    print("")
+                    print("Would you like to use last result? (y/n)")
+                    resultChoice = input(" --> ").lower()
+
+                    if resultChoice in ["y", "yes"]:
+                        useLastResult = True
+                        validResultChoice = True
+                    elif resultChoice in ["n", "no"]:
+                        useLastResult = False
+                        validResultChoice = True
+                    else:
+                        print("Invalid choice!")
+
             elif another in ["n", "no", "exit", "quit"]:
                 validChoice = True
                 calcOn = False
